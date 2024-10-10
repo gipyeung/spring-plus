@@ -54,7 +54,7 @@ public class TodoService {
         Pageable pageable = PageRequest.of(page - 1, size);
 
         // 조건에 맞는 JPQL 메소드 호출
-        Page<Todo> todos = todoRepository.findTodosByConditions(weather, startDate, endDate, pageable);
+        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(weather, startDate, endDate, pageable);
 
         // 검색 결과를 TodoResponse로 매핑
         return todos.map(todo -> new TodoResponse(

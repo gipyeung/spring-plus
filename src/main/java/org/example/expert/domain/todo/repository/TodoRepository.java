@@ -1,5 +1,6 @@
 package org.example.expert.domain.todo.repository;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.example.expert.domain.todo.entity.Todo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface TodoRepository extends JpaRepository<Todo, Long> {
+    private final JPAQueryFactory queryFactory;
 
     @Query("SELECT t FROM Todo t " +
             "LEFT JOIN FETCH t.user u " +  // user와의 관계를 페치 조인
@@ -23,9 +25,18 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
                                      @Param("endDate") LocalDateTime endDate,
                                      Pageable pageable);
 
-    @Query("SELECT t FROM Todo t " +
-            "LEFT JOIN t.user " +
-            "WHERE t.id = :todoId")
-    Optional<Todo> findByIdWithUser(@Param("todoId") Long todoId);
+
+
+    public Optional<Todo> findByIdWithUser(Long todoId) {
+        QTodo todo = QTodo.todo;
+        QUser user = QUser.user;
+
+        Todo result = queryFactory.selectFrom(todo)
+                .leftJoin(todo.user, user).fetchJoin()  // N+1 문제 방지
+                .where(todo.id.eq(todoId))
+                .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
 
 }
